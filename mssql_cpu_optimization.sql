@@ -158,7 +158,7 @@ SELECT TOP 20
     s.avg_user_impact,
     -- Suggested CREATE INDEX statement (review before running):
     'CREATE INDEX IX_' +
-        REPLACE(REPLACE(d.statement, '[', ''), ']', '') + '_missing' +
+        REPLACE(REPLACE(d.statement, '[', ''), ']', '') + '_perf' +
         CAST(ROW_NUMBER() OVER (ORDER BY s.avg_total_user_cost * s.avg_user_impact DESC) AS VARCHAR(5)) +
         ' ON ' + d.statement +
         ' (' +
@@ -318,7 +318,10 @@ SELECT TOP 30
         WHEN ips.avg_fragmentation_in_percent > 30
             THEN 'ALTER INDEX [' + i.name + '] ON ' +
                  OBJECT_SCHEMA_NAME(ips.object_id) + '.' +
-                 OBJECT_NAME(ips.object_id) + ' REBUILD WITH (ONLINE = ON);'
+                 OBJECT_NAME(ips.object_id) +
+                 -- NOTE: ONLINE = ON requires SQL Server Enterprise Edition.
+                 -- Remove "WITH (ONLINE = ON)" on Standard or lower editions.
+                 ' REBUILD WITH (ONLINE = ON);'
         WHEN ips.avg_fragmentation_in_percent > 10
             THEN 'ALTER INDEX [' + i.name + '] ON ' +
                  OBJECT_SCHEMA_NAME(ips.object_id) + '.' +
